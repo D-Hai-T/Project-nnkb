@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      context: ./server
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      CLERK_WEBHOOK_SECRET: ${CLERK_WEBHOOK_SECRET:-}
+    depends_on:
+      - mongo
+    networks:
+      - app-net
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://server:3000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-}
+    ports:
+      - "${CLIENT_PORT:-4173}:80"
+    depends_on:
+      - server
+    networks:
+      - app-net
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-net
+
+networks:
+  app-net:
+
+volumes:
+  mongo-data:
